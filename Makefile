@@ -167,7 +167,7 @@ $(BUILD)/binutils/binutils-built:	$(BUILD)/binutils/binutils-configured
 
 $(BUILD)/binutils/binutils-configured:	$(BUILD)/binutils/binutils-created
 	@$(ECHO) Configuring binutils
-	@$(CD) $(BUILD)/binutils; $(ROOT)/binutils/configure --target=propeller-elf --prefix=$(PREFIX) --disable-nls --disable-shared $(CONFIG_OPTIONS)
+	@$(CD) $(BUILD)/binutils; $(ROOT)/binutils/configure --target=propeller-elf --prefix=$(PREFIX) --disable-nls --disable-shared $(CONFIG_OPTIONS) --disable-werror
 	@$(TOUCH) $@
 
 #######
@@ -233,7 +233,7 @@ $(BUILD)/gdb/gdb-built:	binutils gcc $(BUILD)/gdb/gdb-configured
 
 $(BUILD)/gdb/gdb-configured:	$(BUILD)/gdb/gdb-created
 	@$(ECHO) Configuring gdb
-	@$(CD) $(BUILD)/gdb; $(ROOT)/gdb/configure $(CFGCROSS) --target=propeller-elf --prefix=$(PREFIX) --with-system-gdbinit=$(PREFIX)/lib/gdb/gdbinit $(WITH_CURSES)
+	@$(CD) $(BUILD)/gdb; $(ROOT)/gdb/configure $(CFGCROSS) --target=propeller-elf --prefix=$(PREFIX) --with-system-gdbinit=$(PREFIX)/lib/gdb/gdbinit $(WITH_CURSES) --disable-werror
 	@$(TOUCH) $@
 
 ###########
