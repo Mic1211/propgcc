@@ -1339,6 +1339,8 @@
    xmmio\twrbyte,%1,%0"
    [(set_attr "type" "core,core,hub,hub,multi,multi")
     (set_attr "length" "4,4,4,4,8,8")
+	]
+)
 
 (define_insn "*movqi_xmm_usr"
   [(set (match_operand:QI 0 "nonimmediate_operand"          "=rC,rC,r,SQ")
