@@ -1063,8 +1063,17 @@
 (define_insn "*movsi_imm_lmm"
   [(set (match_operand:SI 0 "register_operand" "=r")
         (match_operand:SI 1 "propeller_big_const" "i"))]
-  "TARGET_LMM"
+  "TARGET_LMM && !TARGET_USER"
   "mvi\t%0,#%c1"
+  [(set_attr "length" "8")
+  ]
+)
+
+(define_insn "*movsi_imm_lmm_usr"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+        (match_operand:SI 1 "propeller_big_const" "i"))]
+  "TARGET_LMM && TARGET_USER"
+  "jmp\t#__LMM_MVI_%0\n\tlong\t%c1\n\tlong\t0"
   [(set_attr "length" "8")
   ]
 )
@@ -1085,7 +1094,7 @@
 (define_insn "*movsi_xmm"
   [(set (match_operand:SI 0 "nonimmediate_operand"          "=rC,rC,r,S,r,Q")
 	(match_operand:SI 1 "general_operand"               "rCI,N,S,r,Q,r"))]
-  "TARGET_XMM"
+  "TARGET_XMM && !TARGET_USER"
   "@
    mov\t%0, %1
    neg\t%0, #%n1
@@ -1095,6 +1104,32 @@
    xmmio\twrlong,%1,%0"
    [(set_attr "type" "core,core,hub,hub,multi,multi")
     (set_attr "length" "4,4,4,4,8,8")
+    (set_attr "predicable" "no")
+   ]
+)
+
+(define_insn "*movsi_xmm_usr"
+  [(set (match_operand:SI 0 "nonimmediate_operand"          "=rC,rC,r,SQ")
+	(match_operand:SI 1 "general_operand"               "rCI,N,SQ,r"))]
+  "TARGET_XMM && TARGET_USER"
+  "*
+		if(which_alternative == 0)
+			return \"mov\t%0, %1\";
+		else if (which_alternative == 1)
+			return \"neg\t%0, #%n1\";
+		else if (which_alternative == 2)
+			if(MEM_VOLATILE_P(operands[1]))
+				return \"xmmio\trdlongv,%0,%1\";
+			else
+				return \"xmmio\trdlong,%0,%1\";
+		else
+			if(MEM_VOLATILE_P(operands[0]))
+				return \"xmmio\twrlongv,%1,%0\";
+			else
+				return \"xmmio\twrlong,%1,%0\";
+  "
+   [(set_attr "type" "core,core,multi,multi")
+    (set_attr "length" "4,4,8,8")
     (set_attr "predicable" "no")
    ]
 )
@@ -1207,8 +1242,17 @@
 (define_insn "*movhi_lmm"
   [(set (match_operand:HI 0 "register_operand" "=r")
         (match_operand:HI 1 "propeller_big_const" "i"))]
-  "TARGET_LMM"
+  "TARGET_LMM && !TARGET_USER"
   "mvi\t%0,#%c1"
+  [(set_attr "length" "8")
+  ]
+)
+
+(define_insn "*movhi_lmm_usr"
+  [(set (match_operand:HI 0 "register_operand" "=r")
+        (match_operand:HI 1 "propeller_big_const" "i"))]
+  "TARGET_LMM && TARGET_USER"
+  "jmp\t#__LMM_MVI_%0\n\tlong\t%c1\n\tlong\t0"
   [(set_attr "length" "8")
   ]
 )
@@ -1216,7 +1260,7 @@
 (define_insn "*movhi_xmm"
   [(set (match_operand:HI 0 "nonimmediate_operand"          "=rC,rC,rC,S,r,Q")
 	(match_operand:HI 1 "general_operand"               "rCI,N,S,rC,Q,r"))]
-  "TARGET_XMM"
+  "TARGET_XMM && !TARGET_USER"
   "@
    mov\t%0, %1
    neg\t%0, #%n1
@@ -1226,6 +1270,33 @@
    xmmio\twrword,%1,%0"
    [(set_attr "type" "core,core,hub,hub,multi,multi")
     (set_attr "length" "4,4,4,4,8,8")
+    (set_attr "predicable" "no")
+   ]
+)
+
+
+(define_insn "*movhi_xmm_usr"
+  [(set (match_operand:HI 0 "nonimmediate_operand"          "=rC,rC,r,SQ")
+	(match_operand:HI 1 "general_operand"               "rCI,N,SQ,r"))]
+  "TARGET_XMM && TARGET_USER"
+  "*
+		if(which_alternative == 0)
+			return \"mov\t%0, %1\";
+		else if (which_alternative == 1)
+			return \"neg\t%0, #%n1\";
+		else if (which_alternative == 2)
+			if(MEM_VOLATILE_P(operands[1]))
+				return \"xmmio\trdwordv,%0,%1\";
+			else
+				return \"xmmio\trdword,%0,%1\";
+		else
+			if(MEM_VOLATILE_P(operands[0]))
+				return \"xmmio\twrwordv,%1,%0\";
+			else
+				return \"xmmio\twrword,%1,%0\";
+  "
+   [(set_attr "type" "core,core,multi,multi")
+    (set_attr "length" "4,4,8,8")
     (set_attr "predicable" "no")
    ]
 )
@@ -1258,7 +1329,7 @@
 (define_insn "*movqi_xmm"
   [(set (match_operand:QI 0 "nonimmediate_operand"          "=rC,rC,rC,S,r,Q")
 	(match_operand:QI 1 "general_operand"               "rCI,N,S,rC,Q,r"))]
-  "TARGET_XMM"
+  "TARGET_XMM && !TARGET_USER"
   "@
    mov\t%0, %1
    neg\t%0, #%n1
@@ -1268,6 +1339,29 @@
    xmmio\twrbyte,%1,%0"
    [(set_attr "type" "core,core,hub,hub,multi,multi")
     (set_attr "length" "4,4,4,4,8,8")
+
+(define_insn "*movqi_xmm_usr"
+  [(set (match_operand:QI 0 "nonimmediate_operand"          "=rC,rC,r,SQ")
+	(match_operand:QI 1 "general_operand"               "rCI,N,SQ,r"))]
+  "TARGET_XMM && TARGET_USER"
+  "*
+		if(which_alternative == 0)
+			return \"mov\t%0, %1\";
+		else if (which_alternative == 1)
+			return \"neg\t%0, #%n1\";
+		else if (which_alternative == 2)
+			if(MEM_VOLATILE_P(operands[1]))
+				return \"xmmio\trdbytev,%0,%1\";
+			else
+				return \"xmmio\trdbyte,%0,%1\";
+		else
+			if(MEM_VOLATILE_P(operands[0]))
+				return \"xmmio\twrbytev,%1,%0\";
+			else
+				return \"xmmio\twrbyte,%1,%0\";
+  "
+   [(set_attr "type" "core,core,multi,multi")
+    (set_attr "length" "4,4,8,8")
     (set_attr "predicable" "no")
    ]
 )
@@ -1303,7 +1397,7 @@
       propeller_need_mask0000ffff = true;
       return "and\\t%0,__MASK_0000FFFF";
     case 1:
-      return "rdword\\t%0,%1";
+      return "xmmio\\trdword,%0,%1";
     case 2:
       return "xmmio\\trdword,%0,%1";
     default:
@@ -1349,7 +1443,7 @@
     case 0:
       return "and\\t%0,#255";
     case 1:
-      return "rdbyte\\t%0,%1";
+      return "xmmio\\trdbyte,%0,%1";
     case 2:
       return "xmmio\\trdbyte,%0,%1";
     default:
@@ -1904,7 +1998,7 @@
 	                [(reg CC_REG) (const_int 0)])
 		      (label_ref (match_operand 0 "" ""))
 		      (pc)))]
-  "TARGET_LMM && !TARGET_CMM"
+  "TARGET_LMM && !TARGET_CMM && !TARGET_USER"
 {
   return (get_attr_length (insn) == 4) ?
                "%p1\tbrs\t#%l0" :
@@ -1926,7 +2020,7 @@
 		      (pc)
 		      (label_ref (match_operand 0 "" ""))
 		      ))]
-  "TARGET_LMM && !TARGET_CMM"
+  "TARGET_LMM && !TARGET_CMM && !TARGET_USER"
 {
   return (get_attr_length (insn) == 4) ?
                "%P1\tbrs\t#%l0" :
@@ -1938,6 +2032,46 @@
           (and (ge (minus (match_dup 0)(pc)) (const_int -504))
 	       (le (minus (match_dup 0)(pc)) (const_int 504)))
 	  (const_int 4)
+	  (const_int 12)))
+]
+)
+
+(define_insn "*condbranch_usr"
+  [(set (pc)
+	(if_then_else (match_operator 1 "ordered_comparison_operator"
+	                [(reg CC_REG) (const_int 0)])
+		      (label_ref (match_operand 0 "" ""))
+		      (pc)))]
+  "TARGET_LMM && !TARGET_CMM && TARGET_USER"
+{
+  return "%P1\tcall\t#__USER_SKIP\n\tjmp\t#__LMM_JMP\n\tlong\t%l0\n\tlong\t0";
+}
+[(set_attr "conds" "use")
+ (set (attr "length")
+      (if_then_else 
+          (and (ge (minus (match_dup 0)(pc)) (const_int -504))
+	       (le (minus (match_dup 0)(pc)) (const_int 504)))
+	  (const_int 12)
+	  (const_int 12)))
+]
+)
+(define_insn "*condbranch_usr_reverse"
+  [(set (pc)
+	(if_then_else (match_operator 1 "ordered_comparison_operator"
+	                 [(reg CC_REG) (const_int 0)])
+		      (pc)
+		      (label_ref (match_operand 0 "" ""))
+		      ))]
+  "TARGET_LMM && !TARGET_CMM && TARGET_USER"
+{
+  return 	"%p1\tcall\t#__USER_SKIP\n\tjmp\t#__LMM_JMP\n\tlong\t%l0\n\tlong\t0";
+}
+[(set_attr "conds" "use")
+ (set (attr "length")
+      (if_then_else 
+          (and (ge (minus (match_dup 0)(pc)) (const_int -504))
+	       (le (minus (match_dup 0)(pc)) (const_int 504)))
+	  (const_int 12)
 	  (const_int 12)))
 ]
 )
@@ -2032,9 +2166,23 @@
 	         (match_operand 1 "" ""))
    (clobber (reg:SI LINK_REG))
   ]
-  "TARGET_LMM"
+  "TARGET_LMM && !TARGET_USER"
   "@
    lcall\t#%0
+   mov\t__TMP0,%0\n\tjmp\t#__LMM_CALL_INDIRECT
+   jmpret\tlr,#__LMM_FCACHE_START+8"
+  [(set_attr "type" "call")
+   (set_attr "length" "8")]
+)
+
+(define_insn "call_std_lmm_usr"
+  [(call (mem:SI (match_operand:SI 0 "call_operand" "i,r,U"))
+	         (match_operand 1 "" ""))
+   (clobber (reg:SI LINK_REG))
+  ]
+  "TARGET_LMM && TARGET_USER"
+  "@
+   lcall\t#%0\n\tlong\t0
    mov\t__TMP0,%0\n\tjmp\t#__LMM_CALL_INDIRECT
    jmpret\tlr,#__LMM_FCACHE_START+8"
   [(set_attr "type" "call")
@@ -2046,9 +2194,22 @@
 	         (match_operand 1 "" ""))
    (return)
   ]
-  "TARGET_LMM"
+  "TARGET_LMM && !TARGET_USER"
   "@
    brl\t#%0
+   jmp\t#__LMM_FCACHE_START+8"
+  [(set_attr "type" "call")
+   (set_attr "length" "8")]
+)
+
+(define_insn "sibcall_std_lmm_usr"
+  [(call (mem:SI (match_operand:SI 0 "sibcall_operand" "i,U"))
+	         (match_operand 1 "" ""))
+   (return)
+  ]
+  "TARGET_LMM && TARGET_USER"
+  "@
+   brl\t#%0\n\tlong\t0
    jmp\t#__LMM_FCACHE_START+8"
   [(set_attr "type" "call")
    (set_attr "length" "8")]
@@ -2126,9 +2287,24 @@
 	      (match_operand 2 "" "")))
    (clobber (reg:SI LINK_REG))
   ]
-  "TARGET_LMM"
+  "TARGET_LMM && !TARGET_USER"
   "@
    lcall\t#%1
+   mov\t__TMP0,%1\n\tjmp\t#__LMM_CALL_INDIRECT
+   jmpret\tlr,#__LMM_FCACHE_START+8"
+  [(set_attr "type" "call")
+   (set_attr "length" "8")]
+ )
+ 
+ (define_insn "*call_value_lmm_usr"
+  [(set (match_operand 0 "propeller_dst_operand" "=rC,rC,rC")
+	(call (mem:SI (match_operand:SI 1 "call_operand" "i,rC,U"))
+	      (match_operand 2 "" "")))
+   (clobber (reg:SI LINK_REG))
+  ]
+  "TARGET_LMM && TARGET_USER"
+  "@
+   lcall\t#%1\n\tlong\t0
    mov\t__TMP0,%1\n\tjmp\t#__LMM_CALL_INDIRECT
    jmpret\tlr,#__LMM_FCACHE_START+8"
   [(set_attr "type" "call")
@@ -2141,9 +2317,23 @@
 	      (match_operand 2 "" "")))
    (return)
   ]
-  "TARGET_LMM"
+  "TARGET_LMM && !TARGET_USER"
   "@
    brl\t#%1
+   jmp\t#__LMM_FCACHE_START+8"
+  [(set_attr "type" "call")
+   (set_attr "length" "8")]
+ )
+ 
+ (define_insn "*sibcall_value_lmm_usr"
+  [(set (match_operand 0 "propeller_dst_operand" "=rC,rC")
+	(call (mem:SI (match_operand:SI 1 "sibcall_operand" "i,U"))
+	      (match_operand 2 "" "")))
+   (return)
+  ]
+  "TARGET_LMM && TARGET_USER"
+  "@
+   brl\t#%1\n\tlong\t0
    jmp\t#__LMM_FCACHE_START+8"
   [(set_attr "type" "call")
    (set_attr "length" "8")]
@@ -2210,7 +2400,7 @@
   "TARGET_CMM"
 {
   return (get_attr_length (insn) == 2) ?
-               "brs\t#%l0" :
+               "brs\t#%l0" :  
 	       "brw\t#%l0";
 }
 [ (set (attr "length")
@@ -2225,7 +2415,7 @@
 (define_insn "*jump_lmm"
   [(set (pc)
 	(label_ref (match_operand 0 "" "")))]
-  "TARGET_LMM && !TARGET_CMM"
+  "TARGET_LMM && !TARGET_CMM && !TARGET_USER"
 {
   return (get_attr_length (insn) == 4) ?
                "brs\t#%l0" :
@@ -2236,6 +2426,22 @@
           (and (ge (minus (match_dup 0)(pc)) (const_int -504))
 	       (le (minus (match_dup 0)(pc)) (const_int 504)))
 	  (const_int 4)
+	  (const_int 8)))
+]
+)
+
+(define_insn "*jump_usr"
+  [(set (pc)
+	(label_ref (match_operand 0 "" "")))]
+  "TARGET_LMM && !TARGET_CMM && TARGET_USER"
+{
+  return "jmp\t#__LMM_JMP\n\tlong\t%l0\n\tlong\t0";
+}
+[ (set (attr "length")
+      (if_then_else 
+          (and (ge (minus (match_dup 0)(pc)) (const_int -504))
+	       (le (minus (match_dup 0)(pc)) (const_int 504)))
+	  (const_int 8)
 	  (const_int 8)))
 ]
 )
@@ -2327,8 +2533,16 @@
   [(return)
    (use (match_operand:SI 0 "register_operand" "r"))
   ]
-  "TARGET_LMM"
+  "TARGET_LMM && !TARGET_USER"
   "lret"
+)
+
+(define_insn "return_usr"
+  [(return)
+   (use (match_operand:SI 0 "register_operand" "r"))
+  ]
+  "TARGET_LMM && TARGET_USER"
+  "call #__LR_RET"
 )
 
 (define_insn "naked_return"
@@ -2467,11 +2681,46 @@
         (plus:SI (match_dup 1)(const_int -1)))
    (clobber (match_scratch:SI 3 "=X,&1,&?r"))
   ]
-"TARGET_LMM && !TARGET_CMM"
+"TARGET_LMM && !TARGET_CMM && !TARGET_USER"
 {
  if (which_alternative != 0)
    return "#";
  return "djnz\\t%1,#__LMM_JMP\\n\\tlong\\t%l0";
+}
+ "&& reload_completed
+  && (! REG_P (operands[2]) || ! rtx_equal_p (operands[1], operands[2]))"
+ [(set (match_dup 3)(match_dup 1))
+  (parallel
+    [(set (reg:CC_Z CC_REG)
+          (compare:CC_Z (plus:SI (match_dup 3)(const_int -1))
+	                (const_int 0)))
+      (set (match_dup 3)(plus:SI (match_dup 3)(const_int -1)))])
+  (set (match_dup 2)(match_dup 3))
+  (set (pc) (if_then_else (ne (reg:CC_Z CC_REG)(const_int 0))
+                          (label_ref (match_dup 0))
+                          (pc)))]
+ ""
+ [(set_attr "type" "multi,multi,multi")
+  (set_attr "length" "8,16,16")
+ ]
+)
+
+(define_insn_and_split "djnz_lmm_usr"
+  [(set (pc)
+        (if_then_else
+	  (ne (match_operand:SI 1 "propeller_dst_operand" "rC,rC,rC")
+	      (const_int 1))
+	  (label_ref (match_operand 0 "" ""))
+	  (pc)))
+   (set (match_operand:SI 2 "nonimmediate_operand" "=1,?X,?X")
+        (plus:SI (match_dup 1)(const_int -1)))
+   (clobber (match_scratch:SI 3 "=X,&1,&?r"))
+  ]
+"TARGET_LMM && !TARGET_CMM && TARGET_USER"
+{
+ if (which_alternative != 0)
+   return "#";
+ return "djnz\\t%1,#__LMM_JMP\\n\\tlong\\t%l0\\n\\tlong\\t0";
 }
  "&& reload_completed
   && (! REG_P (operands[2]) || ! rtx_equal_p (operands[1], operands[2]))"

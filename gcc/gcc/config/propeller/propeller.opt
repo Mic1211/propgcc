@@ -78,3 +78,7 @@ Select Propeller 2 code generation.
 mexperimental
 Target Mask(EXPERIMENTAL)
 Enable experimental optimizations which may or may not work correctly.
+
+muser
+Target RejectNegative Mask(USER) Report
+Generate code for user programs instead of generic code

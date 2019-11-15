@@ -229,6 +229,12 @@ propeller_option_override (void)
         error ("-fPIC and -fpic are not supported");
         flag_pic = 0;
     }
+
+	/* -muser implies -mxmm*/
+	if (TARGET_USER)
+		target_flags |= MASK_XMM;
+
+
     /* -mcmm implies -mlmm */
     if (TARGET_CMM)
       target_flags |= MASK_LMM;
@@ -3723,7 +3729,10 @@ propeller_output_seqend(FILE *file)
   fprintf (file, "\t''end delay slot\n");
 }
 
-
+
+#undef TARGET_HAVE_SRODATA_SECTION
+#define TARGET_HAVE_SRODATA_SECTION     true
+
 #undef TARGET_ATTRIBUTE_TABLE
 #define TARGET_ATTRIBUTE_TABLE propeller_attribute_table
 

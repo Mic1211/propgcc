@@ -1912,7 +1912,7 @@ md_assemble (char *instruction_string)
           }
         regnum = -1;
         str = parse_regspec (str, &regnum, &op2, 1);
-        if (regnum < 0 || regnum > 15)
+        if ((regnum < 0 || regnum > 15))
           {
             op2.error = _("illegal register");
           }
@@ -1926,10 +1926,17 @@ md_assemble (char *instruction_string)
           }
         regnum = -1;
         str = parse_regspec (str, &regnum, &op2, 1);
-        if (regnum < 0 || regnum > 15)
+        if ((regnum < 0 || regnum > 15) && (regnum != SP_REGNUM))
           {
             op2.error = _("illegal register");
           }
+
+		//the stack pointer doesn't fit into TMP0 
+		//but if we set the top bit this lets the read and writes know we are using Stack Pointer
+		if (regnum == SP_REGNUM)
+		{
+			regnum = 0x100;
+		}
         insn.code |= (regnum);
 
         // now set up the CALL instruction
